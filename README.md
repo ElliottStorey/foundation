@@ -4,7 +4,11 @@ A lightweight CLI for managing Docker services with automatic reverse proxying a
 
 ## Install
 
-Build from source:
+```bash
+curl -fsSL https://raw.githubusercontent.com/elliottstorey/foundation/main/install.sh | bash
+```
+
+Or build from source:
 
 ```bash
 uv sync
