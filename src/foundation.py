@@ -35,7 +35,7 @@ def get_services_compose():
     result = subprocess.run(["docker", "compose", "-f", services_compose_path, "config"])
     if result.returncode != 0: return
 
-    services_compose = json.loads(services_compose.read_text())
+    services_compose = json.loads(services_compose_path.read_text())
     return services_compose
 
 def docker_installed():
