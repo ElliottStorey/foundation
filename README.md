@@ -1,6 +1,6 @@
 # Foundation
 
-A lightweight CLI for managing Docker services with automatic reverse proxying and SSL termination.
+CLI tool for managing Docker services with automatic reverse proxying and SSL termination.
 
 ## Install
 
@@ -17,8 +17,6 @@ uv run pyinstaller --onefile src/foundation.py
 
 ## Usage
 
-**Usage**:
-
 ```console
 $ foundation [OPTIONS] COMMAND [ARGS]...
 ```
@@ -31,59 +29,30 @@ $ foundation [OPTIONS] COMMAND [ARGS]...
 
 **Commands**:
 
-* `install`: Initialize the Foundation environment and...
-* `update`: Update services by pulling latest git...
-* `deploy`: Start the foundation core and all defined...
-* `status`: List all running services and their status.
-* `create`: Create and deploy a new service from a Git...
-* `delete`: Stop and remove a service, deleting its...
+* `init`: Install all dependencies and start the...
+* `status`: View the status, uptime, and URLs of all...
+* `create`: Add a new service from a Git repo or...
+* `delete`: Permanently remove a service and its...
+* `deploy`: Build and start services.
 
-## `foundation install`
+## `foundation init`
 
-Initialize the Foundation environment and install necessary dependencies.
-
-**Usage**:
-
-```console
-$ foundation install [OPTIONS]
-```
-
-**Options**:
-
-* `--default-email TEXT`: The email address to use for Let&#x27;s Encrypt SSL certificate registration.
-* `--help`: Show this message and exit.
-
-## `foundation update`
-
-Update services by pulling latest git changes and rebuilding images.
+Install all dependencies and start the reverse proxy.
 
 **Usage**:
 
 ```console
-$ foundation update [OPTIONS]
+$ foundation init [OPTIONS]
 ```
 
 **Options**:
 
-* `--help`: Show this message and exit.
-
-## `foundation deploy`
-
-Start the foundation core and all defined services.
-
-**Usage**:
-
-```console
-$ foundation deploy [OPTIONS]
-```
-
-**Options**:
-
+* `--default-email TEXT`: Default email address used for Let&#x27;s Encrypt SSL registration.  [required]
 * `--help`: Show this message and exit.
 
 ## `foundation status`
 
-List all running services and their status.
+View the status, uptime, and URLs of all services.
 
 **Usage**:
 
@@ -97,7 +66,7 @@ $ foundation status [OPTIONS]
 
 ## `foundation create`
 
-Create and deploy a new service from a Git repository or Docker image.
+Add a new service from a Git repo or Docker image.
 
 **Usage**:
 
@@ -107,23 +76,23 @@ $ foundation create [OPTIONS] NAME
 
 **Arguments**:
 
-* `NAME`: The unique name for the new service.  [required]
+* `NAME`: Name of the service to create.  [required]
 
 **Options**:
 
-* `--repo, --image TEXT`: The source Git repository URL or Docker image name.  [required]
-* `--host TEXT`: The hostname/domain where the service will be accessible (VIRTUAL_HOST).
-* `--port INTEGER`: The internal port the container listens on.  [default: 80]
-* `--letsencrypt-email TEXT`: Specific email for Let&#x27;s Encrypt notifications for this service.
-* `-e, --env TEXT`: Environment variables in KEY=VALUE format.
-* `-v, --volume TEXT`: Volume mappings in NAME:PATH format.
-* `--restart [no|always|on-failure|unless-stopped]`: The restart policy for the container.  [default: unless-stopped]
-* `--gpu`: Enable GPU support for this service (requires Nvidia drivers).
+* `--repo, --image TEXT`: Git repository or Docker image.  [required]
+* `--domain TEXT`: The public domain name to proxy to this service.
+* `--internal-port INTEGER`: The internal container port to be proxied.
+* `--email TEXT`: Email address used for Let&#x27;s Encrypt SSL registration.
+* `-e, --env KEY=VALUE`: Environment variables to pass into the service container.
+* `-v, --volume VOLUME:PATH`: Volume mappings to pass into the service container.
+* `--restart [no|always|on-failure|unless-stopped]`: Restart policy for the service.  [default: unless-stopped]
+* `--gpu`: Enable NVIDIA GPU access for the service container.
 * `--help`: Show this message and exit.
 
 ## `foundation delete`
 
-Stop and remove a service, deleting its local files.
+Permanently remove a service and its configuration.
 
 **Usage**:
 
@@ -133,9 +102,28 @@ $ foundation delete [OPTIONS] NAME
 
 **Arguments**:
 
-* `NAME`: The name of the service to delete.  [required]
+* `NAME`: Name of the service to delete.  [required]
 
 **Options**:
 
+* `--help`: Show this message and exit.
+
+## `foundation deploy`
+
+Build and start services. Use this to apply changes.
+
+**Usage**:
+
+```console
+$ foundation deploy [OPTIONS] [NAME]
+```
+
+**Arguments**:
+
+* `[NAME]`: Name of the service to deploy.
+
+**Options**:
+
+* `--quiet`: Do not show logs while deploying.
 * `--help`: Show this message and exit.
 

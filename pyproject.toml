@@ -5,6 +5,7 @@ description = "A lightweight CLI for managing Docker services with automatic rev
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "shellingham>=1.5.4",
     "typer>=0.21.1",
 ]
 
