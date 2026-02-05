@@ -359,8 +359,8 @@ def init(
         try:
             deploy(quiet=True)
             Output.success("foundation initialised", "create your first service", "create")
-        except Exception as e:
-            Output.error("Could not deploy proxy", "check the logs", "deploy", exception=e)
+        except Exception:
+            pass
 
 @app.command(help="View the status, uptime, and URLs of all services.")
 def status():
@@ -470,8 +470,8 @@ def create(
         try:
             deploy(quiet=True)
             Output.success(f"Service [bold italic]{service_name}[/] created", "view its status", "status")
-        except Exception as e:
-            Output.error("Could not deploy changes", "check the logs", f"deploy {service_name}", exception=e)
+        except Exception:
+            pass
 
 @app.command(help="Permanently remove a service and its configuration.")
 def delete(
@@ -507,8 +507,8 @@ def delete(
         try:
             deploy(quiet=True)
             Output.success(f"Service [bold italic]{service_name}[/] deleted", "view remaining services", "status")
-        except Exception as e:
-            Output.error("Could not deploy changes", "check the logs", "deploy", exception=e)
+        except Exception:
+            pass
 
 @app.command(help="Build and start services. Use this to apply changes.")
 def deploy(
@@ -571,7 +571,7 @@ def deploy(
                 Docker.compose_up(PROXY_PATH)
                 Output.success("Started the reverse proxy")
             except Exception as e:
-                Output.error("Could not start reverse proxy", exception=e)
+                Output.error("Could not start reverse proxy", "check the logs above", exception=e)
         
         if services:
             with console.status("Starting services..."):
@@ -579,7 +579,7 @@ def deploy(
                     Docker.compose_up(SERVICES_PATH)
                     Output.success("Deployment complete", "view running services", "status")
                 except Exception as e:
-                    Output.error("Could not start services", exception=e)
+                    Output.error("Could not start services", "check the logs above", exception=e)
     finally:
         console.quiet = original_quiet
 
