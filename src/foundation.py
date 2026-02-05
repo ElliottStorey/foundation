@@ -514,7 +514,6 @@ def deploy(
     console.quiet = quiet
 
     try:
-
         for service_name, service in services.items():
             if name and service_name != name: continue
 
@@ -561,12 +560,13 @@ def deploy(
             except Exception as e:
                 Output.error("Could not start reverse proxy", exception=e)
         
-        with console.status("Starting services..."):
-            try:
-                Docker.compose_up(SERVICES_PATH)
-                Output.success("Deployment complete", "view running services", "status")
-            except Exception as e:
-                Output.error("Could not start services", exception=e)
+        if services:
+            with console.status("Starting services..."):
+                try:
+                    Docker.compose_up(SERVICES_PATH)
+                    Output.success("Deployment complete", "view running services", "status")
+                except Exception as e:
+                    Output.error("Could not start services", exception=e)
     finally:
         console.quiet = original_quiet
 
