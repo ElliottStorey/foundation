@@ -114,7 +114,7 @@ class Docker:
         subprocess.run(list(filter(None, ["docker", "compose", "-f", compose_path, "pull", service_name])), capture_output=True, check=True)
 
     def compose_up(compose_path, service_name=None):
-        subprocess.run(list(filter(None, ["docker", "compose", "-f", compose_path, "up", service_name, "-d"])), capture_output=True, check=True)
+        subprocess.run(list(filter(None, ["docker", "compose", "-f", compose_path, "up", service_name, "--detach", "--remove-orphans"])), capture_output=True, check=True)
 
 class Git:
     @staticmethod
