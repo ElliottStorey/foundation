@@ -378,7 +378,7 @@ def status():
     if not services_status:
         Output.info("No services defined", "add a service", "create", exit=True)
 
-    table = Table(title=f"Services" if len(service_status) == 1 else f"{len(services_status)} Services")
+    table = Table(title=f"Services" if len(services_status) == 1 else f"{len(services_status)} Services")
     table.add_column("Name", style ="bold italic")
     table.add_column("Status")
     table.add_column("Uptime", style="dim")
