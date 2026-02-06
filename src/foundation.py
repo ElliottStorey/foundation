@@ -8,6 +8,7 @@ from typing import Annotated
 import typer
 from rich.console import Console
 from rich.table import Table
+from rich import box
 
 APP_NAME = "foundation"
 APP_DIR = typer.get_app_dir(APP_NAME)
@@ -375,16 +376,21 @@ def status():
     if not services_status:
         Output.info("No services defined", "add a service", "create", exit=True)
 
-    table = Table(title="Services")
-    table.add_column("Name")
+    table = Table(
+        title=f"{len(services_status)} Services",
+        box=box.ROUNDED
+    )
+    table.add_column("Name", style ="bold italic")
     table.add_column("Status")
-    table.add_column("Uptime")
+    table.add_column("Uptime", style="dim")
     table.add_column("Domain")
 
     for service_name, service_status in services_status.items():
         status = service_status.get("status", "-")
+        status = f"[green]{status}[/]" if status == "running" else f"[red]{status}[/]"
         uptime = service_status.get("state", "-")
-        host = services_compose.get("services", {}).get(service_name, {}).get("environment", {}).get("VIRTUAL_HOST", "-")
+        host = services_compose.get("services", {}).get(service_name, {}).get("environment", {}).get("VIRTUAL_HOST")
+        host = f"[link=https://{host}]{host}[/]" if host else "-"
         table.add_row(service_name, status, uptime, host)
 
     console.print(table)
