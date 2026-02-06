@@ -210,10 +210,15 @@ class Output:
         console.quiet = False
 
         if isinstance(exception, subprocess.CalledProcessError):
-            if exception.stderr:
-                console.print(f"[red]{exception.stderr.decode().strip()}[/]")
-            elif exception.stdout:
-                console.print(f"[red]{exception.stdout.decode().strip()}[/]")
+            stderr = exception.stderr
+            stdout = exception.stdout
+            
+            if stderr:
+                msg = stderr.decode().strip() if isinstance(stderr, bytes) else stderr.strip()
+                console.print(f"[red]{msg}[/]")
+            elif stdout:
+                msg = stdout.decode().strip() if isinstance(stdout, bytes) else stdout.strip()
+                console.print(f"[red]{msg}[/]")
         elif exception:
             console.print_exception(show_locals=True)
 
