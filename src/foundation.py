@@ -117,6 +117,9 @@ class Docker:
     def compose_up(compose_path, service_name=None):
         subprocess.run(list(filter(None, ["docker", "compose", "-f", compose_path, "up", service_name, "--detach", "--remove-orphans"])), capture_output=True, check=True)
 
+    def compose_down(compose_path):
+        subprocess.run(list(filter(None, ["docker", "compose", "-f", compose_path, "down", "--detach", "--remove-orphans"])), capture_output=True, check=True)
+
 class Git:
     @staticmethod
     def installed():
@@ -363,7 +366,7 @@ def init(
 
     with console.status("Deploying changes..."):
         try:
-            deploy(quiet=True)
+            deploy(report_success=False)
             Output.success("foundation initialised", "create your first service", "create")
         except Exception:
             pass
@@ -478,12 +481,11 @@ def create(
         except Exception as e:
             Output.error("Could not update configuration files", exception=e)
 
-    with console.status("Deploying changes..."):
-        try:
-            deploy(quiet=True)
-            Output.success(f"Service [bold italic]{service_name}[/] created", "view its status", "status")
-        except Exception:
-            pass
+    try:
+        deploy(service_name, report_success=False)
+        Output.success(f"Service [bold italic]{service_name}[/] created", "view its status", "status")
+    except Exception:
+        pass
 
 @app.command(help="Permanently remove a service and its configuration.")
 def delete(
@@ -515,85 +517,84 @@ def delete(
         except Exception as e:
             Output.error("Could not clean up files", exception=e)
 
-    with console.status("Deploying changes..."):
-        try:
-            deploy(quiet=True)
-            Output.success(f"Service [bold italic]{service_name}[/] deleted", "view remaining services", "status")
-        except Exception:
-            pass
+    try:
+        deploy(service_name, report_success=False)
+        Output.success(f"Service [bold italic]{service_name}[/] deleted", "view remaining services", "status")
+    except Exception:
+        pass
 
-@app.command(help="Build and start services. Use this to apply changes.")
+@app.command(help="Build and start services. Use this to apply changes.", hidden=True)
 def deploy(
     name: Annotated[str, typer.Argument(help="Name of the service to deploy.")] = None,
-    quiet: Annotated[bool, typer.Option("--quiet", help="Do not show logs while deploying.")] = False
+    report_success: bool = True
 ):
     services_compose = Docker.get_compose(SERVICES_PATH)
     services = services_compose.get("services", {})
 
-    if name:
-        if name not in services:
-            Output.error(f"Service [bold italic]{name}[/] is not defined", "create it first", f"create {name}")
-        services = { name: services[name] }
+    for service_name, service in services.items():
+        if name and service_name != name: continue
 
-    original_quiet = console.quiet
-    console.quiet = quiet
+        service_dir = SERVICES_DIR / service_name
+        build = service.get("build")
+        image = service.get("image", "")
 
-    try:
-        for service_name, service in services.items():
-            if name and service_name != name: continue
-
-            service_dir = SERVICES_DIR / service_name
-            build = service.get("build")
-            image = service.get("image", "")
-
-            if build or image == f"foundation/{service_name}":
-                with console.status(f"Updating repository for service [bold italic]{service_name}[/]..."):
-                    try:
-                        Git.reset(service_dir)
-                        Output.success(f"Updated repository for service [bold italic]{service_name}[/]")
-                    except Exception as e:
-                        Output.error(f"Could not update repository for service [bold italic]{service_name}[/]", "check remote access and permissions", exception=e)
-
-            if build:
-                with console.status(f"Building service [bold italic]{service_name}[/] from Dockerfile..."):
-                    try:
-                        Docker.compose_build(SERVICES_PATH, service_name)
-                        Output.success(f"Built service [bold italic]{service_name}[/]")
-                    except Exception as e:
-                        Output.error(f"Could not build service [bold italic]{service_name}[/]", "make sure that the Dockerfile is valid", exception=e)
-            elif image == f"foundation/{service_name}":
-                with console.status(f"Building service [bold italic]{service_name}[/] from source..."):
-                    try:
-                        railpack_plan_path = service_dir / "railpack-plan.json"
-                        Railpack.prepare(service_dir, railpack_plan_path)
-                        Docker.build_from_railpack_plan(f"foundation/{service_name}", service_dir, railpack_plan_path)
-                        Output.success(f"Built service [bold italic]{service_name}[/]")
-                    except Exception as e:
-                        Output.error(f"Could not build service [bold italic]{service_name}[/]", exception=e)
-            else:
-                with console.status(f"Pulling service [bold italic]{service_name}[/]..."):
-                    try:
-                        Docker.compose_pull(SERVICES_PATH, service_name)
-                        Output.success(f"Pulled service [bold italic]{service_name}[/]")
-                    except Exception as e:
-                        Output.error(f"Could not pull service [bold italic]{service_name}[/]", "make sure that the image is valid", exception=e)
-
-        with console.status("Starting reverse proxy..."):
-            try:
-                Docker.compose_up(PROXY_PATH)
-                Output.success("Started the reverse proxy")
-            except Exception as e:
-                Output.error("Could not start reverse proxy", "check the logs above", exception=e)
-        
-        if services:
-            with console.status("Starting services..."):
+        if build or image == f"foundation/{service_name}":
+            with console.status(f"Updating repository for service [bold italic]{service_name}[/]..."):
                 try:
-                    Docker.compose_up(SERVICES_PATH)
-                    Output.success("Deployment complete", "view running services", "status")
+                    Git.reset(service_dir)
+                    Output.success(f"Updated repository for service [bold italic]{service_name}[/]")
                 except Exception as e:
-                    Output.error("Could not start services", "check the logs above", exception=e)
-    finally:
-        console.quiet = original_quiet
+                    Output.error(f"Could not update repository for service [bold italic]{service_name}[/]", "check remote access and permissions", exception=e)
+
+        if build:
+            with console.status(f"Building service [bold italic]{service_name}[/] from Dockerfile..."):
+                try:
+                    Docker.compose_build(SERVICES_PATH, service_name)
+                    Output.success(f"Built service [bold italic]{service_name}[/]")
+                except Exception as e:
+                    Output.error(f"Could not build service [bold italic]{service_name}[/]", "make sure that the Dockerfile is valid", exception=e)
+        elif image == f"foundation/{service_name}":
+            with console.status(f"Building service [bold italic]{service_name}[/] from source..."):
+                try:
+                    railpack_plan_path = service_dir / "railpack-plan.json"
+                    Railpack.prepare(service_dir, railpack_plan_path)
+                    Docker.build_from_railpack_plan(f"foundation/{service_name}", service_dir, railpack_plan_path)
+                    Output.success(f"Built service [bold italic]{service_name}[/]")
+                except Exception as e:
+                    Output.error(f"Could not build service [bold italic]{service_name}[/]", exception=e)
+        else:
+            with console.status(f"Pulling service [bold italic]{service_name}[/]..."):
+                try:
+                    Docker.compose_pull(SERVICES_PATH, service_name)
+                    Output.success(f"Pulled service [bold italic]{service_name}[/]")
+                except Exception as e:
+                    Output.error(f"Could not pull service [bold italic]{service_name}[/]", "make sure that the image is valid", exception=e)
+
+    with console.status("Starting reverse proxy..."):
+        try:
+            Docker.compose_up(PROXY_PATH)
+            if report_success:
+                Output.success("Started the reverse proxy")
+        except Exception as e:
+            Output.error("Could not start reverse proxy", "check the logs above", exception=e)
+
+    if not services:
+        with console.status(f"Updating service [bold italic]{name}[/]..." if name else "Updating services..."):
+            try:
+                Docker.compose_down(SERVICES_PATH)
+                if report_success:
+                    Output.success("Deployment complete", "view running services", "status")
+                return
+            except Exception as e:
+                Output.error(f"Could not update service [bold italic]{name}[/]" if name else "Could not update services", "check the logs above", exception=e)
+
+    with console.status(f"{"Starting" if name in services else "Updating"} service [bold italic]{name}[/]..." if name else "Starting services..."):
+        try:
+            Docker.compose_up(SERVICES_PATH)
+            if report_success:
+                Output.success("Deployment complete", "view running services", "status")
+        except Exception as e:
+            Output.error(f"Could not {"Start" if name in services else "Update"} service [bold italic]{name}[/]" if name else "Could not start services", "check the logs above", exception=e)
 
 if __name__ == "__main__":
     app()
