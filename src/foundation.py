@@ -385,12 +385,12 @@ def status():
     table.add_column("Domain")
 
     for service_name, service_status in services_status.items():
-        status = service_status.get("status", "-")
-        status = f"[green]{status}[/]" if status == "running" else f"[red]{status}[/]"
-        uptime = service_status.get("state", "-")
+        state = service_status.get("state", "-")
+        state = f"[green]{state}[/]" if state == "running" else f"[red]{state}[/]"
+        uptime = service_status.get("status", "-")
         host = services_compose.get("services", {}).get(service_name, {}).get("environment", {}).get("VIRTUAL_HOST")
         host = f"[link=https://{host}]{host}[/]" if host else "-"
-        table.add_row(service_name, status, uptime, host)
+        table.add_row(service_name, state, uptime, host)
 
     console.print(table)
 
