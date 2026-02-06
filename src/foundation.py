@@ -58,8 +58,8 @@ class Docker:
         
     @staticmethod
     def get_compose(compose_path):
-        result = subprocess.run(["docker", "compose", "--file", compose_path, "config", "--format", "json"], capture_output=True, text=True, check=True)
-        return json.loads(result.stdout)
+        subprocess.run(["docker", "compose", "--file", compose_path, "config", "--format", "json"], capture_output=True, check=True)
+        return json.loads(compose_path.read_text())
     
     @staticmethod
     def get_compose_status(compose_path):
